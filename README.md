@@ -44,7 +44,7 @@ key(selectorvalue).  Only move this input column to the selected output column i
 
 key([columnreference]).  Only move this input column to the selected output column if this row's selector column matches the value of the input column named between the [square brackets].
 
-	Example:
+	Example Map File:
 
 	Input\Output,Employee ID,Last Name,First Name,Federal Filing Status,State,Federal Allowances,State Allowances
 	Employee ID(*),key(FedW) trim,,,,,,
