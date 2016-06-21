@@ -64,7 +64,7 @@ RUNNING THE CONVERSION
 
 To run the conversion open a command prompt (Window Key-R then enter cmd and click Ok).  Change the directory to whereever the program was stored.  I'm going to suggest a directory named convert under your documents directory.  If so the command would be:
 
-cd %userprofile%\documents\converter
+cd %userprofile%\documents\convert
 
 within that directory we will create three subdirectories:
 
