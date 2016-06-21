@@ -47,19 +47,12 @@ key([columnreference]).  Only move this input column to the selected output colu
 	Example:
 
 	Input\Output,Employee ID,Last Name,First Name,Federal Filing Status,State,Federal Allowances,State Allowances
-
 	Employee ID(*),key(FedW) trim,,,,,,
-
 	Last Name,,key(FedW),,,,,
-
 	First Name,,,key(FedW),,,,
-
 	tcode(#),,,,,,,
-
 	Federal Filing Status,,,,key(FedW) chg(S=Single,M=Married),,,
-
 	State,,,,,key(FedW),,
-
 	exemptions,,,,,,key(FedW) trim,key([State]) trim
 	
 	Rows with the same value in Employee ID column are to be combined into a single output row.  Rows for the same Employee ID and that have the value FedW in the tcode column contain Federal Withholding Exemptions in the Exemption column.  Those with a value that matches the contents of the State column contain the State Exemptions.  When the Employee ID vlue changes in the next row, the merged output row is written.
