@@ -11,7 +11,9 @@ MAPS
 The maps file will be a csv file written from a spreadsheet having the input columns names running down the first column on the left side and having the standard output column names running across the top row.
 
 If this is a multi-line file:
+
 	Unique ID: You will need to append an asterisk inside parentheses (*) after the input column name that contains the unique identifier (like employee id or SSN) that indicates when multiple rows need to merge into a single output row.
+	
 	Selection Key: You will need to append a pound sign inside parentheses (#) after the input column name that will act as the selector value that shows what kind of information about the person is contained in one row.
 
 At the intersection of the input column name and the output column name enter rules and/or a priorty separated with blanks.
