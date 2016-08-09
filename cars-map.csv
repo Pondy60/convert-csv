@@ -1,0 +1,6 @@
+Input\Output,Mfgr,Model,Yr,$Price$,Descr
+Year,,,1,,
+Make,1,,,,
+Model,,1,,,
+Description,,,,,1
+Price,,,,1,

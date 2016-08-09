@@ -1,10 +1,12 @@
 use strict;
 
-my $DEBUG = 1;	# 1 = output extra messages.  0 = output just required messages
-my $ISEP = ',';	# This characters is what the export file used as a column separator 
+my $DEBUG = 0;	# 1 = output extra messages.  0 = output just required messages
+my $RSEP = ",";	# This character is what the map file used as a column separator 
+my $ISEP = ",";	# This character is what the export file used as a column separator 
 my $OSEP = ',';	# This characters is what the import file needs as a column separator 
 my $IQOT = '"';	# This characters is what the export file used to quote text
 my $OQOT = '"';	# This characters is what the import file needs as quotes around text
+my $MAXCOLS = 9999;
 
 my @rules;
 my (@icols,%icol,@ocols,@opriority,%ocol,@rnames,@inames,@onames,@r2i,%name2icol,$col,$rcol,$icol,$icols,$ocol,$opriority,$ocols,$colname,$colnum,$keycolname,$keycolnum,$keycolval,$idcolname,$idcolnum,$idcolval,$previdcolval);
@@ -21,7 +23,7 @@ my $outpath = 'imports/';
 
 my @files = @ARGV;	# can optionally include file names to process (separated by space) containing optional asterisks as wildcard characters, otherwise all .csv files within exports/ directory will be procesed
 unless (scalar(@files)) {
-	@files = glob $inpath . '*.csv';
+	@files = glob $inpath . '*';
 }
 
 &logmsg("Files to be processed:");
@@ -48,7 +50,7 @@ foreach $infile (@files) {
 	open IN,"<$infile" or die "Unable to open $infile for input.\n$!";
 	$line = <IN>;
 	chomp $line;
-	@inames = &get_row($line);
+	@inames = &get_row($ISEP, $line);
 	for ($icol = 0; $icol < scalar(@inames); $icol++) {
 		$name2icol{$inames[$icol]} = $icol;
 		if ($inames[$icol] eq $idcolname) {
@@ -62,16 +64,17 @@ foreach $infile (@files) {
 		if (exists($name2icol{$rnames[$rcol]})) {
 			$r2i[$rcol] = $name2icol{$rnames[$rcol]};
 		} else {
-			&logmsg("Map $mapfile contains rule for input column named $rnames[$rcol], but input file $infile does not have a column with that name.");
-			die "Map $mapfile contains rule for input column named '$rnames[$rcol]', but input file $infile does not have a column with that name.";
+			&logmsg("Map $mapfile contains rule for input column named $rnames[$rcol], but input file $infile does not have a column with that name.  You may need to change the \$ISEP value in convert.pl");
+			die "Map $mapfile contains rule for input column named '$rnames[$rcol]', but input file $infile does not have a column with that name.  You may need to change the \$ISEP value in convert.pl";
 		}
 		
 	}
 	$row = 1;
-	while (<IN>) {
+inrec:
+   while (<IN>) {
 		chomp;
 		$line = $_;
-		@icols = &get_row($line);
+		@icols = &get_row($ISEP, $line);
 		unless ($idcolname and ($idcolval eq $previdcolval)) {
 			&put_row if (@ocols);
 		}
@@ -81,19 +84,29 @@ foreach $infile (@files) {
 			for ($ocol = 0; $ocol < $num_cols_out; $ocol++) {
 				if ($rules[$icol][$ocol]) {	# if a rule exists, process it
 					$ovalue = $icols[$icol];
-					# force upper case
+					# keep: only keep records whose key column value matches key value selector
+					if ($rules[$icol][$ocol] =~ /\bkeep\(([^)]+)\)/i) {
+						$keyval = $1;
+						if ($keycolval ne $keyval) {
+						   &logmsg("Dropping record for unmatched key: $keycolval ne $keyval");
+						   undef @ocols;	# reset output columns for a new row
+							next inrec;    # skip this row
+						}
+					}
+					# trim: force upper case
 					if ($rules[$icol][$ocol] =~ /\btrim\b/i) {
 						$ovalue = &trim(&unquote($ovalue));
 					}
-					# force upper case
+					# upper: force upper case
 					if ($rules[$icol][$ocol] =~ /\bupper\b/i) {
 						$ovalue = uc($ovalue);
 					}
-					# force lower case
+					# lower: force lower case
 					if ($rules[$icol][$ocol] =~ /\blower\b/i) {
+						$temp = $1;
 						$ovalue = lc($ovalue);
 					}
-					# force Title text (initial capitals)
+					# proper: force Title text (initial capitals)
 					if ($rules[$icol][$ocol] =~ /\bproper\b/i) {
 						$temp = $ovalue;
 						$ovalue = '';
@@ -104,19 +117,19 @@ foreach $infile (@files) {
 							&logmsg("Proper temp = '$temp', ovalue = '$ovalue'") if($DEBUG);
 						}
 					}
-					# split Last Name, First Name on comma and store Last Name into this column
+					# lname: split Last Name, First Name on comma and store Last Name into this column
 					if ($rules[$icol][$ocol] =~ /\blname\b/i) {
 						@word = split /,/,$ovalue;
 						$ovalue = shift @word;
 					}
-					# split Last Name, First Name on comma and store First Name into this column
+					# fname: split Last Name, First Name on comma and store First Name into this column
 					if ($rules[$icol][$ocol] =~ /\bfname\b/i) {
 						@word = split /,/,$ovalue;
 						shift @word;
 						$ovalue = join ',',@word;
 					}
 
-					# change one value to another
+					# chg: change one value to another
 					if ($rules[$icol][$ocol] =~ /\bchg\(([^)]+)\)/i) {
 						$temp = $1;
 						@word = split /,/,$temp;
@@ -133,11 +146,11 @@ foreach $infile (@files) {
 					#	-----------------------------------
 					#	To Quote or Not to Quote.  Pick one
 					#	-----------------------------------
-					# force treatment as number (remove enclosing quote characters $IQOT if present)
+					# number: force treatment as number (remove enclosing quote characters $IQOT if present)
 					if ($rules[$icol][$ocol] =~ /\bnumber\b/i) {
 						$ovalue = &unquote($ovalue);
 					}
-					# force treatment as text (enclose in quote characters $OQOT)
+					# text: force treatment as text (enclose in quote characters $OQOT)
 					elsif ($rules[$icol][$ocol] =~ /\btext\b/i) {
 						&logmsg("Quoting: '" . $ovalue . "'") if($DEBUG);
 						$ovalue = &quote($ovalue);
@@ -152,13 +165,13 @@ foreach $infile (@files) {
 						$ovalue = &quote($ovalue);
 					}
 
-					# set output priority
+					# 1 (or 2, 3, etc): set output priority
 					if ($rules[$icol][$ocol] =~ /\b(\d+)\b/i) {
 						$opriority = $1;
 					} else {
 						$opriority = 0;
 					}
-					# detect collision and move to output column if okay
+					# key: detect collision and move to output column if okay
 					if ($rules[$icol][$ocol] =~ /\bkey\(([^)]+)\)/i) {
 						$keyval = $1;
 						if ($keyval =~ /^\[(.+)\]$/) {
@@ -194,16 +207,16 @@ sub put_row {
 }
 
 sub get_row {
-	my ($line) = @_;
+	my ($sep, $line) = @_;
 	my @cols;
-	my $loopcount = 20;
+	my $loopcount = $MAXCOLS;
 	my $colnum = 0;
 	&logmsg("Get Columns from Row: $line") if ($DEBUG);
 	while ($line) {
-		$line =~ s/^((?!$IQOT)[^$ISEP]*|$IQOT([^$IQOT]|$IQOT$IQOT)*$IQOT)($ISEP|$)//g;
+		$line =~ s/^((?!$IQOT)[^$sep]*|$IQOT([^$IQOT]|$IQOT$IQOT)*$IQOT)($sep|$)//g;
 		push @cols,$1;
 		$cols[-1] =~ s/^$IQOT(.*)$IQOT$/$1/;
-		die "Debugging" if (--$loopcount < 1);
+		die "Debugging - more than $MAXCOLS columns!" if (--$loopcount < 1);
 	}
 	$idcolval = $cols[$idcolnum] if ($idcolname);
 	$keycolval = $cols[$keycolnum] if ($keycolname);
@@ -220,7 +233,7 @@ sub get_rules {
 	&logmsg("Reading rules from $mapfile");
 	$line = <MAPIN>;
 	chomp $line;
-	@onames = &get_row($line);
+	@onames = &get_row($RSEP, $line);
 	shift @onames;	# drop cell A1 since it is just "input\output"
 	$num_cols_out = scalar(@onames);
 	$rcol = 0;
@@ -228,7 +241,7 @@ sub get_rules {
 	while (<MAPIN>) {
 		chomp;
 		$line = $_;
-		@cols = &get_row($line);
+		@cols = &get_row($RSEP,$line);
 		$colname = shift @cols;
 		if (substr($colname, 0-length($keytag), length($keytag)) eq $keytag) {
 			$colname = substr($colname, 0, length($colname) - length($keytag));

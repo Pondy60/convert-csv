@@ -11,7 +11,7 @@ The maps file will be a csv file written from a spreadsheet having the input col
 
 If this is a multi-line file:
 	Unique ID: You will need to append an asterisk inside parentheses (*) after the input column name that contains the unique identifier (like employee id or SSN) that indicates when multiple rows need to merge into a single output row.
-	Selection Key: You will need to append a pound sign inside parentheses (#) after the input column name that will act as the selector value that shows what kind of information about the person is contained in one row.
+	Selection Key: You will need to append a pound sign inside parentheses (#) after the input column name that will act as the selector value that shows the row record type.
 
 At the intersection of the input column name and the output column name enter rules and/or a priorty separated with blanks.
 
@@ -30,6 +30,7 @@ proper. Capitalize.
 lname.  Split Last Name, First Name on comma and store the last name into this column
 fname.  Split Last Name, First Name on comma and store the first name into this column
 chg(from1=to1,from2=to2,from3=to3).  Compare the value to be moved to each of the from# values.  If matched, replace with the corresponding to# value.  Example: chg(S=Single,M=Married).
+keep(selectorvalue).  Only move this input row to the output file if this row's selector column matches the value inside the parenthesis. 
 key(selectorvalue).  Only move this input column to the selected output column if this row's selector column matches the value inside the parenthesis. 
 key([columnreference]).  Only move this input column to the selected output column if this row's selector column matches the value of the input column named between the [square brackets].
 	Example:

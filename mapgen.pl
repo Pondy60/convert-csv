@@ -5,6 +5,7 @@ my $ISEP = ',';	# This characters is what the export file used as a column separ
 my $OSEP = ',';	# This characters is what the import file needs as a column separator 
 my $IQOT = '"';	# This characters is what the export file used to quote text
 my $OQOT = '"';	# This characters is what the import file needs as quotes around text
+my $MAXCOLS = 9999;
 
 my @rules;
 my (@icols,%icol,@ocols,@opriority,%ocol,@rnames,@inames,@onames,@r2i,%name2icol,$col,$rcol,$icol,$icols,$ocol,$opriority,$ocols,$colname,$colnum,$keycolname,$keycolnum,$keycolval,$idcolname,$idcolnum,$idcolval,$previdcolval);
@@ -57,14 +58,14 @@ foreach $infile (@files) {
 sub get_row {
 	my ($line) = @_;
 	my @cols;
-	my $loopcount = 20;
+	my $loopcount = $MAXCOLS;
 	my $colnum = 0;
 	&logmsg("Get Columns from Row: $line") if ($DEBUG);
 	while ($line) {
 		$line =~ s/^((?!$IQOT)[^$ISEP]*|$IQOT([^$IQOT]|$IQOT$IQOT)*$IQOT)($ISEP|$)//g;
 		push @cols,$1;
 		$cols[-1] =~ s/^$IQOT(.*)$IQOT$/$1/;
-		die "Debugging" if (--$loopcount < 1);
+		die "Debugging - More than $MAXCOLS columns." if (--$loopcount < 1);
 	}
 	$idcolval = $cols[$idcolnum] if ($idcolname);
 	$keycolval = $cols[$keycolnum] if ($keycolname);

@@ -1,0 +1,6 @@
+
+Logging to cars-log.txt
+Reading rules from maps/cars-map.csv
+Writing output to imports/cars-import.csv
+Reading input from exports/cars.csv
+
