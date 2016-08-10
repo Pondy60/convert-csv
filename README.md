@@ -4,6 +4,7 @@ convert.pl
 Change Log:
 -----------
 2016-06-21 Pondy60 Initial creation.
+2016-08-09 Pondy60 Added new variable for Rules separator character to distinguish from input separator character.  Added keep function.  Added example files for input and map.
 
 MAPS
 ----
